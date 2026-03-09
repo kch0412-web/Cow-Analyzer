@@ -7,39 +7,31 @@ import cv2
 
 # 페이지 설정
 st.set_page_config(page_title="소 분석기", layout="wide")
-st.title("🐂 소 양수현황 분석기 (최종 안정화 버전)")
+st.title("🐂 소 양수현황 분석기 (초경량 버전)")
 
-# 엔진 로딩을 아주 조심스럽게 합니다
+# 모델을 캐싱하여 서버 메모리 점유를 최소화합니다
 @st.cache_resource
-def load_reader():
-    # 모델을 미리 다운로드하지 않고 호출될 때만 사용하도록 설정
+def get_reader():
     return easyocr.Reader(['ko', 'en'], gpu=False)
 
-# 버튼을 누르기 전까지는 엔진을 깨우지 않습니다 (서버 부담 방지)
-if 'reader' not in st.session_state:
-    st.session_state.reader = None
-
-uploaded_files = st.file_uploader("사진을 선택하세요 (여러 장 가능)", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True)
+# 사진 업로드 (여러 장 가능)
+uploaded_files = st.file_uploader("사진을 선택하세요", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True)
 
 if uploaded_files:
     st.info(f"현재 {len(uploaded_files)}장의 사진이 대기 중입니다.")
     
-    if st.button("🚀 분석 시작 (클릭 시 엔진 가동)"):
-        # 여기서 엔진을 처음으로 부릅니다
-        if st.session_state.reader is None:
-            with st.spinner("서버 엔진을 깨우는 중입니다... (처음 한 번만 1~2분 소요)"):
-                st.session_state.reader = load_reader()
-        
+    if st.button("🚀 실시간 분석 시작"):
         all_data = []
-        progress_bar = st.progress(0)
+        # 버튼을 누른 순간에만 엔진을 가동합니다
+        reader = get_reader()
         
-        for i, uploaded_file in enumerate(uploaded_files):
-            with st.spinner(f"[{i+1}/{len(uploaded_files)}] {uploaded_file.name} 분석 중..."):
+        for uploaded_file in uploaded_files:
+            with st.spinner(f"{uploaded_file.name} 처리 중..."):
                 file_bytes = np.frombuffer(uploaded_file.read(), np.uint8)
                 img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-                result = st.session_state.reader.readtext(img)
+                result = reader.readtext(img)
                 
-                # 데이터 정리 로직 (기존과 동일)
+                # 데이터 정리 로직
                 lines = {}
                 for (bbox, text, prob) in result:
                     y_center = (bbox[0][1] + bbox[2][1]) / 2
@@ -72,14 +64,10 @@ if uploaded_files:
                                     '양수일': t_date.strftime('%Y-%m-%d')
                                 })
                         except: continue
-            progress_bar.progress((i + 1) / len(uploaded_files))
 
         if all_data:
             df = pd.DataFrame(all_data)
-            st.success("✅ 모든 분석이 완료되었습니다!")
+            st.success("분석 완료!")
             st.dataframe(df, use_container_width=True)
             csv = df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 엑셀 결과 다운로드", csv, "cow_result.csv", "text/csv")
-        else:
-            st.warning("분석 결과 대상 개체가 없습니다.")
-
+            st.download_button("📥 엑셀 결과 저장", csv, "result.csv", "text/csv")
