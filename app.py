@@ -18,7 +18,15 @@ def load_reader():
 reader = load_reader()
 
 # 3. 파일 업로드 섹션 (카메라 연동 가능)
-uploaded_file = st.file_uploader("사진을 찍거나 파일을 선택하세요", type=['jpg', 'jpeg', 'png'])
+uploaded_files = st.file_uploader("사진들을 여러 장 선택하거나 찍으세요", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True)
+
+if uploaded_files:
+    all_data = []
+    if st.button("실시간 통합 분석 시작"):
+        # 여러 개의 파일을 하나씩 반복해서 처리합니다.
+        for uploaded_file in uploaded_files:
+            with st.spinner(f'{uploaded_file.name} 분석 중...'):
+                # (기존 분석 로직 동일)
 
 if uploaded_file is not None:
     # 화면에 찍은 사진 미리보기
@@ -80,3 +88,4 @@ if uploaded_file is not None:
             st.download_button("📥 결과 다운로드 (엑셀저장)", csv, "result.csv", "text/csv")
         else:
             st.warning("10개월 이상인 개체를 찾지 못했습니다. 사진을 다시 확인해주세요.")
+
