@@ -1,6 +1,5 @@
-streamlit
-easyocr
+streamlit==1.31.0
+easyocr==1.7.1
 pandas
 opencv-python-headless
-openpyxl
 numpy
