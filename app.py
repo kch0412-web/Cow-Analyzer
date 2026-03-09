@@ -12,7 +12,8 @@ st.title("🐂 소 양수현황 분석기 (모바일/다중 업로드)")
 # 2. OCR 엔진 준비
 @st.cache_resource
 def load_reader():
-    return easyocr.Reader(['ko', 'en'], gpu=False)
+    # download_enabled=True를 명시하고, 모델 파일을 더 안정적으로 불러옵니다.
+    return easyocr.Reader(['ko', 'en'], gpu=False, download_enabled=True)
 
 reader = load_reader()
 
@@ -87,3 +88,4 @@ if uploaded_files:
             st.download_button("📥 통합 결과 다운로드 (엑셀)", csv, "total_result.csv", "text/csv")
         else:
             st.warning("분석 결과 10개월 이상인 개체가 없습니다.")
+
