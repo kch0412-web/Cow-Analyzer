@@ -12,14 +12,17 @@ st.title("🐂 소 양수현황 분석기 (모바일/다중 업로드)")
 # 2. OCR 엔진 준비
 @st.cache_resource
 def load_reader():
-    # 진행 상황을 화면에 표시합니다.
-    st.write("🔍 분석 엔진(OCR)을 준비 중입니다. 잠시만 기다려 주세요...")
-    # 모델을 명시적으로 다운로드하도록 설정합니다.
-    return easyocr.Reader(['ko', 'en'], gpu=False)
+    # 빈 공간을 하나 만듭니다
+    status_placeholder = st.empty()
+    status_placeholder.write("🔍 분석 엔진(OCR)을 준비 중입니다. 잠시만 기다려 주세요...")
+    
+    reader = easyocr.Reader(['ko', 'en'], gpu=False)
+    
+    # 준비가 끝나면 기존 문구를 지우고 완료 메시지를 띄웁니다
+    status_placeholder.success("✅ 엔진 준비 완료! 이제 사진을 올리셔도 됩니다.")
+    return reader
 
-# 메인 로직 시작 전 호출
-reader = load_reader()
-st.success("✅ 엔진 준비 완료! 이제 사진을 올리셔도 됩니다.")
+# 함수 호출
 reader = load_reader()
 
 # 3. 파일 업로드 섹션 (accept_multiple_files=True 설정)
@@ -93,5 +96,6 @@ if uploaded_files:
             st.download_button("📥 통합 결과 다운로드 (엑셀)", csv, "total_result.csv", "text/csv")
         else:
             st.warning("분석 결과 10개월 이상인 개체가 없습니다.")
+
 
 
